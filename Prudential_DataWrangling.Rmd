@@ -1,0 +1,150 @@
+---
+title: "Prudential Data Wrangling"
+author: "Francia Moscoso"
+date: "May 2, 2016"
+output: html_document
+---
+**Loading Libraries**
+```{r LoadLib, message=F, warning=F}
+library(dplyr)     
+library(corrplot) 
+library(Amelia)
+```
+
+
+**Populate NA with median values**
+```{r comment="", echo=TRUE}
+Populate_na <- function(datafra)
+{
+	for(i in 1:ncol(datafra))
+	{
+		if(is.numeric(datafra[,i]))
+		{
+			datafra[is.na(datafra[,i]),i] <- median(datafra[!is.na(datafra[,i]),i])
+		}
+	}
+	datafra
+}
+```
+
+
+**Loading Data Sets**
+```{r comment="", echo=TRUE}
+# Working Directory
+setwd("~/SprintboardProject/PrudentialIns")  
+
+# Load raw data to 'train' and 'test' repositories
+train <- read.csv("./DataSets/train.csv", header = TRUE)
+test <-  read.csv("./DataSets/test.csv", header = TRUE)
+
+```
+<br>
+**Read training data set dimension**
+```{r comment="", echo=TRUE}
+dim(train)
+```
+<br>
+**Evaluate missing data**
+```{r comment="", echo=TRUE}
+#missmap(train, main = "Missing values vs observed")  All Variables
+
+#Checking train data set missing values
+missmap(subset(train,select=c(1:30)),    main = "train: Missing values - Columns 1:30 ")
+missmap(subset(train,select=c(31:60)),   main = "train: Missing values - Columns 31:60")
+missmap(subset(train,select=c(61:90)),   main = "train: Missing values - Columns 61:90")
+missmap(subset(train,select=c(91:120)),  main = "train: Missing values - Columns 91:1200")
+missmap(subset(train,select=c(121:128)), main = "train: Missing values - Columns 121:128")
+
+#Checking test data set missing values
+missmap(subset(test,select=c(1:30)),    main = "test: Missing values - Columns 1:30 ")
+missmap(subset(test,select=c(31:60)),   main = "test: Missing values - Columns 31:60")
+missmap(subset(test,select=c(61:90)),   main = "test: Missing values - Columns 61:90")
+missmap(subset(test,select=c(91:120)),  main = "test: Missing values - Columns 91:120")
+missmap(subset(test,select=c(121:127)), main = "test: Missing values - Columns 121:127")
+```
+<br>
+<br>
+**Ten columns with missing data in train data set:**<br>
+Insurance_History_5, Family_Hist_2 THRU Family_Hist_5, Medical_History_1, Medical_History_10,Medical_History15,Medical_History24,Medical_History32
+<br>
+<br>
+**Twelve columns with missing data in test data set:**<br>
+Insurance_History_5, Employment_Info_6, Employment_Info_4, Medical_History_10,
+Medical_History15, Family_Hist_5, Family_Hist_3, Family_Hist_2, Family_Hist_4, Medical_History_1,
+Medical_History_32, Medical_History_24
+
+
+
+**Percentage of missing data in train data set**
+```{r comment="", echo=TRUE}
+#Number of rows in training data set
+TotRow <- nrow(train) 
+
+train %>% filter(is.na(Insurance_History_5)) %>% count()/TotRow
+train %>% filter(is.na(Family_Hist_2)) %>% count()/TotRow
+train %>% filter(is.na(Family_Hist_3)) %>% count()/TotRow
+train %>% filter(is.na(Family_Hist_4)) %>% count()/TotRow
+train %>% filter(is.na(Family_Hist_5)) %>% count()/TotRow
+train %>% filter(is.na(Medical_History_1)) %>% count()/TotRow
+train %>% filter(is.na(Medical_History_10)) %>% count()/TotRow
+train %>% filter(is.na(Medical_History_15)) %>% count()/TotRow
+train %>% filter(is.na(Medical_History_24)) %>% count()/TotRow
+train %>% filter(is.na(Medical_History_32)) %>% count()/TotRow
+```
+<br>
+<br>
+**The following train data set columns have missing data in a percentage greater than 30%:**<br>
+Insurance_History_5 (42.76%)<br>
+Family_Hist_2(48.25%)<br>
+Family_Hist_3(57.66%)<br>
+Family_Hist_4(32.30%)<br>
+Family_Hist_5(70.41)<br>
+Medical_History_10(99.06%)<br>
+Medical_History_15(75.10%)<br>
+Medical_History_24(93.59%)<br>
+Medical_History_32(98.13%)<br>
+<br>
+<br>
+**Percentage of missing data in test data set**
+```{r comment="", echo=TRUE}
+#Number of rows in training data set
+TotRow <- nrow(test) 
+
+test %>% filter(is.na(Insurance_History_5)) %>% count()/TotRow
+test %>% filter(is.na(Employment_Info_4)) %>% count()/TotRow
+test %>% filter(is.na(Employment_Info_6)) %>% count()/TotRow
+test %>% filter(is.na(Family_Hist_2)) %>% count()/TotRow
+test %>% filter(is.na(Family_Hist_3)) %>% count()/TotRow
+test %>% filter(is.na(Family_Hist_4)) %>% count()/TotRow
+test %>% filter(is.na(Family_Hist_5)) %>% count()/TotRow
+test %>% filter(is.na(Medical_History_1)) %>% count()/TotRow
+test %>% filter(is.na(Medical_History_10)) %>% count()/TotRow
+test %>% filter(is.na(Medical_History_15)) %>% count()/TotRow
+test %>% filter(is.na(Medical_History_24)) %>% count()/TotRow
+test %>% filter(is.na(Medical_History_32)) %>% count()/TotRow
+```
+<br>
+<br>
+**The following test data set columns have missing data in a percentage greater than 30%:**<br>
+Insurance_History_5 (41.00%)<br>
+Family_Hist_2(49.98%)<br>
+Family_Hist_3(55.9%)<br>
+Family_Hist_4(33.89%)<br>
+Family_Hist_5(68.92%)<br>
+Medical_History_10(98.98%)<br>
+Medical_History_15(75.20%)<br>
+Medical_History_24(94.02%)<br>
+Medical_History_32(98.22%)<br>
+<br>
+<br>
+**Populate Missing Values**
+```{r comment="", echo=TRUE}
+#train data set: Populate missing data with median values - Exclude column: 1 (Id) 
+tra_clean <- Populate_na(train[,-c(1)])
+
+#test data set: Populate missing data with median values - Exclude column: 1 (Id) 
+test_clean <- Populate_na(test[,-c(1)])
+```
+<br>
+<br>
+<br>
